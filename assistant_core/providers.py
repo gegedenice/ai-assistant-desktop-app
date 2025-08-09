@@ -10,7 +10,7 @@ class BaseProvider:
 from config.settings import settings
 
 class OpenAIProvider(BaseProvider):
-    def __init__(self, api_key=None, model="gpt-4", mode="chat"):
+    def __init__(self, api_key=None, model="gpt-5", mode="chat"):
         # Prioritize settings, then environment variable, then direct parameter
         self.api_key = settings.get_api_key("openai") or os.getenv("OPENAI_API_KEY") or api_key
 
