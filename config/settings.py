@@ -11,10 +11,16 @@ class Settings:
             # Default settings
             return {
                 "mcp_servers": [],
-                "openai_api_mode": "chat"
+                "openai_api_mode": "chat",
+                "api_keys": {}
             }
+
         with open(self.config_file, 'r') as f:
-            return json.load(f)
+            settings = json.load(f)
+            # Ensure api_keys key exists for backward compatibility
+            if "api_keys" not in settings:
+                settings["api_keys"] = {}
+            return settings
 
     def save(self):
         with open(self.config_file, 'w') as f:
@@ -49,6 +55,14 @@ class Settings:
         if mode not in ["chat", "assistant"]:
             raise ValueError("Invalid API mode specified.")
         self.set("openai_api_mode", mode)
+
+    def get_api_key(self, provider):
+        return self.get("api_keys", {}).get(provider)
+
+    def set_api_key(self, provider, key):
+        keys = self.get("api_keys", {})
+        keys[provider] = key
+        self.set("api_keys", keys)
 
 # Global settings instance
 settings = Settings()

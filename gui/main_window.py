@@ -1,6 +1,6 @@
 import tkinter as tk
 from assistant_core.assistant import Assistant
-from .dialogs import MCPManagerDialog
+from .dialogs import MCPManagerDialog, ApiKeysDialog
 from config.settings import settings
 
 class MainWindow(tk.Tk):
@@ -20,6 +20,7 @@ class MainWindow(tk.Tk):
 
         # File Menu
         file_menu = tk.Menu(self.menu_bar, tearoff=0)
+        file_menu.add_command(label="Manage API Keys", command=self.open_api_keys_manager)
         file_menu.add_command(label="Manage MCP Servers", command=self.open_mcp_manager)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.quit)
@@ -62,6 +63,9 @@ class MainWindow(tk.Tk):
 
         self.output_text.insert(tk.END, f"> Assistant: {response}\n\n")
         self.input_text.delete("1.0", tk.END)
+
+    def open_api_keys_manager(self):
+        ApiKeysDialog(self)
 
     def open_mcp_manager(self):
         MCPManagerDialog(self)

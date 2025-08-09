@@ -2,6 +2,26 @@ import tkinter as tk
 from tkinter import simpledialog, messagebox
 from config.settings import settings
 
+class ApiKeysDialog(simpledialog.Dialog):
+    def body(self, master):
+        self.title("Manage API Keys")
+
+        tk.Label(master, text="OpenAI API Key:").grid(row=0, sticky="w")
+
+        self.openai_key_var = tk.StringVar(master)
+        self.openai_key_var.set(settings.get_api_key("openai") or "")
+
+        self.openai_key_entry = tk.Entry(master, textvariable=self.openai_key_var, width=50)
+        self.openai_key_entry.grid(row=0, column=1, padx=5, pady=5)
+
+        return self.openai_key_entry
+
+    def apply(self):
+        new_key = self.openai_key_var.get().strip()
+        if new_key:
+            settings.set_api_key("openai", new_key)
+            messagebox.showinfo("Success", "OpenAI API Key saved.", parent=self)
+
 class MCPManagerDialog(simpledialog.Dialog):
     def body(self, master):
         self.title("Manage MCP Servers")
