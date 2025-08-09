@@ -1,8 +1,16 @@
+import atexit
 from gui.main_window import MainWindow
+from assistant_core.process_manager import ProcessManager
 
 def main():
-    # The MCP server is no longer run locally.
-    # The assistant now connects to external servers.
+    # Initialize and start MCP server processes
+    process_manager = ProcessManager()
+    process_manager.start_servers()
+
+    # Register shutdown hook to terminate servers on exit
+    atexit.register(process_manager.shutdown)
+
+    # Run the GUI
     app = MainWindow()
     app.mainloop()
 

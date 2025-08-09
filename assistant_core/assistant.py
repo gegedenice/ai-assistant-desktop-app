@@ -16,9 +16,17 @@ class Assistant:
 
     def _fetch_all_tools(self):
         all_tools = []
-        for url in self.mcp_server_urls:
+        server_definitions = settings.get_mcp_servers()
+        for server in server_definitions:
+            if not server.get('enabled'):
+                continue
+
+            url = server.get('url')
+            if not url:
+                continue
+
             try:
-                response = requests.get(f"{url}/tools")
+                response = requests.get(f"{url}/tools", timeout=5)
                 response.raise_for_status()
                 server_tools = response.json()
                 for tool_schema in server_tools:
