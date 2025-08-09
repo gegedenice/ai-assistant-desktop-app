@@ -1,3 +1,6 @@
 openai
 pandas
 tk
+Flask
+requests
+beautifulsoup4
