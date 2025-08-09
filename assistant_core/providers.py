@@ -13,9 +13,9 @@ class OpenAIProvider(BaseProvider):
     def __init__(self, api_key=None, model="gpt-4", mode="chat"):
         # Prioritize settings, then environment variable, then direct parameter
         self.api_key = settings.get_api_key("openai") or os.getenv("OPENAI_API_KEY") or api_key
-        if not self.api_key:
-            raise ValueError("OpenAI API key not found. Please set it in the 'Manage API Keys' dialog or as an OPENAI_API_KEY environment variable.")
-        self.client = openai.OpenAI(api_key=self.api_key)
+
+        # The client will be initialized on-demand to avoid errors if key is not set at startup
+        self.client = None
         self.model = model
         self.mode = mode
 
@@ -23,20 +23,26 @@ class OpenAIProvider(BaseProvider):
         self.assistant = None
         self.thread = None
 
-        if self.mode == "assistant":
-            # In a real app, you'd persist and retrieve these IDs
-            self.assistant = self.client.beta.assistants.create(
-                name="Personal Assistant",
-                instructions="You are a personal assistant. You have access to tools to help answer questions.",
-                tools=[{"type": "function", "function": t['schema']['function']} for t in tools],
-                model=self.model
-            )
-            self.thread = self.client.beta.threads.create()
-
     def handle_chat(self, user_input: str, tool_schemas: list, tool_invoker: callable) -> str:
+        if not self.api_key:
+            return "Error: OpenAI API key is not configured. Please set it via the File -> Manage API Keys menu."
+
+        # Initialize client now that we know we have a key and need to use it
+        if self.client is None:
+            self.client = openai.OpenAI(api_key=self.api_key)
+
         if self.mode == "chat":
             return self._handle_chat_completions(user_input, tool_schemas, tool_invoker)
         elif self.mode == "assistant":
+            # Assistant API also needs the client, and might need to be re-initialized if tools change
+            if self.assistant is None:
+                 self.assistant = self.client.beta.assistants.create(
+                    name="Personal Assistant",
+                    instructions="You are a personal assistant. You have access to tools to help answer questions.",
+                    tools=[{"type": "function", "function": t['schema']['function']} for t in tool_schemas],
+                    model=self.model
+                )
+                 self.thread = self.client.beta.threads.create()
             return self._handle_assistant_api(user_input, tool_invoker)
         else:
             return "Error: Invalid API mode selected."
