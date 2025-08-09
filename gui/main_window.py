@@ -29,14 +29,6 @@ class MainWindow(tk.Tk):
         self.config(menu=self.menu_bar)
 
     def _create_widgets(self):
-        # API Mode Switcher
-        api_frame = tk.Frame(self)
-        tk.Label(api_frame, text="API Mode:").pack(side="left", padx=(10, 5))
-        self.api_mode_var = tk.StringVar(value=settings.get_api_mode())
-        self.api_mode_menu = tk.OptionMenu(api_frame, self.api_mode_var, "chat", "assistant", command=self.on_api_mode_change)
-        self.api_mode_menu.pack(side="left")
-        api_frame.pack(fill="x", pady=5)
-
         # Main chat widgets
         self.input_text = tk.Text(self, height=4)
         self.input_text.pack(fill="x", padx=10)
@@ -70,7 +62,3 @@ class MainWindow(tk.Tk):
     def open_mcp_manager(self):
         MCPManagerDialog(self)
 
-    def on_api_mode_change(self, mode):
-        settings.set_api_mode(mode)
-        # We can also show a little message or just let it apply on next send
-        self.output_text.insert(tk.END, f"[System] API Mode set to '{mode}'. Changes will apply on next command.\n")

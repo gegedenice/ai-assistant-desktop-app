@@ -11,7 +11,6 @@ class Settings:
             # Default settings
             return {
                 "mcp_servers": [],
-                "openai_api_mode": "chat",
                 "api_keys": {}
             }
 
@@ -59,14 +58,6 @@ class Settings:
         if 0 <= index < len(servers):
             servers.pop(index)
             self.set("mcp_servers", servers)
-
-    def get_api_mode(self):
-        return self.get("openai_api_mode", "chat")
-
-    def set_api_mode(self, mode):
-        if mode not in ["chat", "assistant"]:
-            raise ValueError("Invalid API mode specified.")
-        self.set("openai_api_mode", mode)
 
     def get_api_key(self, provider):
         return self.get("api_keys", {}).get(provider)

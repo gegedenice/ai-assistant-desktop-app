@@ -10,18 +10,14 @@ class BaseProvider:
 from config.settings import settings
 
 class OpenAIProvider(BaseProvider):
-    def __init__(self, api_key=None, model="gpt-4", mode="chat"):
+    def __init__(self, api_key=None, model="gpt-5"):
         # Prioritize settings, then environment variable, then direct parameter
         self.api_key = settings.get_api_key("openai") or os.getenv("OPENAI_API_KEY") or api_key
 
         # The client will be initialized on-demand to avoid errors if key is not set at startup
         self.client = None
         self.model = model
-        self.mode = mode
-
         self.messages = []
-        self.assistant = None
-        self.thread = None
 
     def handle_chat(self, user_input: str, tool_schemas: list, tool_invoker: callable) -> str:
         if not self.api_key:
@@ -31,21 +27,7 @@ class OpenAIProvider(BaseProvider):
         if self.client is None:
             self.client = openai.OpenAI(api_key=self.api_key)
 
-        if self.mode == "chat":
-            return self._handle_chat_completions(user_input, tool_schemas, tool_invoker)
-        elif self.mode == "assistant":
-            # Assistant API also needs the client, and might need to be re-initialized if tools change
-            if self.assistant is None:
-                 self.assistant = self.client.beta.assistants.create(
-                    name="Personal Assistant",
-                    instructions="You are a personal assistant. You have access to tools to help answer questions.",
-                    tools=[{"type": "function", "function": t['schema']['function']} for t in tool_schemas],
-                    model=self.model
-                )
-                 self.thread = self.client.beta.threads.create()
-            return self._handle_assistant_api(user_input, tool_invoker)
-        else:
-            return "Error: Invalid API mode selected."
+        return self._handle_chat_completions(user_input, tool_schemas, tool_invoker)
 
     def _handle_chat_completions(self, user_input: str, tool_schemas: list, tool_invoker: callable) -> str:
         self.messages.append({"role": "user", "content": user_input})
@@ -82,29 +64,3 @@ class OpenAIProvider(BaseProvider):
         except Exception as e:
             return f"Error calling OpenAI API: {e}"
 
-    def _handle_assistant_api(self, user_input: str, tool_invoker: callable) -> str:
-        self.client.beta.threads.messages.create(thread_id=self.thread.id, role="user", content=user_input)
-        run = self.client.beta.threads.runs.create(thread_id=self.thread.id, assistant_id=self.assistant.id)
-
-        while run.status in ['queued', 'in_progress', 'cancelling']:
-            time.sleep(1)
-            run = self.client.beta.threads.runs.retrieve(thread_id=self.thread.id, run_id=run.id)
-
-        if run.status == 'requires_action':
-            tool_outputs = []
-            for tool in run.required_action.submit_tool_outputs.tool_calls:
-                function_name = tool.function.name
-                function_args = json.loads(tool.function.arguments)
-                output = tool_invoker(function_name, function_args)
-                tool_outputs.append({"tool_call_id": tool.id, "output": str(output)})
-
-            run = self.client.beta.threads.runs.submit_tool_outputs(thread_id=self.thread.id, run_id=run.id, tool_outputs=tool_outputs)
-            while run.status in ['queued', 'in_progress']:
-                time.sleep(1)
-                run = self.client.beta.threads.runs.retrieve(thread_id=self.thread.id, run_id=run.id)
-
-        if run.status == 'completed':
-            messages = self.client.beta.threads.messages.list(thread_id=self.thread.id)
-            return messages.data[0].content[0].text.value
-        else:
-            return f"Assistant run failed with status: {run.status}"

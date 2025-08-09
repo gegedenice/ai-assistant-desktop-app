@@ -8,7 +8,6 @@
             "enabled": true
         }
     ],
-    "openai_api_mode": "assistant",
     "api_keys": {
         "openai": "sk-..."
     }

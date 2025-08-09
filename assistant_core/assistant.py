@@ -5,9 +5,7 @@ from config.settings import settings
 
 class Assistant:
     def __init__(self, provider=None):
-        self.api_mode = settings.get_api_mode()
-        self.provider = provider or OpenAIProvider(mode=self.api_mode)
-
+        self.provider = provider or OpenAIProvider()
         self.mcp_server_urls = settings.get_mcp_servers()
         self.tools_info = self._fetch_all_tools()
         self.tool_schemas = [info['schema'] for info in self.tools_info]
