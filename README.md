@@ -133,7 +133,7 @@ This project uses `uv` for fast environment and package management.
 
 5.  **Run the application**
     ```bash
-    python main.py
+    uv run main.py
     ```
 
 ---
