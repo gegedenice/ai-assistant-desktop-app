@@ -12,8 +12,8 @@ class MainWindow(tk.Tk):
         self._create_menu()
         self._create_widgets()
 
-        # Initialize assistant after UI is setup, as it might depend on settings
-        self.assistant = Assistant()
+        # Assistant will be initialized on the first `on_send` call
+        self.assistant = None
 
     def _create_menu(self):
         self.menu_bar = tk.Menu(self)
