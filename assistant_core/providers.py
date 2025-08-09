@@ -7,11 +7,14 @@ class BaseProvider:
     def handle_chat(self, user_input: str, tools: list, tool_invoker: callable) -> str:
         raise NotImplementedError()
 
+from config.settings import settings
+
 class OpenAIProvider(BaseProvider):
     def __init__(self, api_key=None, model="gpt-4", mode="chat"):
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        # Prioritize settings, then environment variable, then direct parameter
+        self.api_key = settings.get_api_key("openai") or os.getenv("OPENAI_API_KEY") or api_key
         if not self.api_key:
-            raise ValueError("OpenAI API key not provided or set in OPENAI_API_KEY environment variable.")
+            raise ValueError("OpenAI API key not found. Please set it in the 'Manage API Keys' dialog or as an OPENAI_API_KEY environment variable.")
         self.client = openai.OpenAI(api_key=self.api_key)
         self.model = model
         self.mode = mode

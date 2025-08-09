@@ -125,11 +125,9 @@ This project uses `uv` for fast environment and package management.
     ```
 
 4.  **Configure the Assistant**
-    - **API Key**: Set your OpenAI API key as an environment variable:
-      ```bash
-      export OPENAI_API_KEY='your_api_key_here'
-      ```
-    - **MCP Servers**: Run the application. Use the `File -> Manage MCP Servers` menu to add the URLs of the tool servers you want to connect to. The application will create a `config.json` file to store your settings.
+    - Run the application. It will create a `config.json` file in the root directory to store your settings.
+    - **API Key**: Use the `File -> Manage API Keys` menu to add your OpenAI API key.
+    - **MCP Servers**: Use the `File -> Manage MCP Servers` menu to add the URLs of the tool servers you want to connect to.
 
 5.  **Run the application**
     ```bash
