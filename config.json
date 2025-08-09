@@ -2,6 +2,6 @@
     "mcp_servers": [],
     "openai_api_mode": "assistant",
     "api_keys": {
-        "openai": ""
+        "openai": "sk-..."
     }
 }
