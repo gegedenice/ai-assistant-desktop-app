@@ -34,18 +34,30 @@ class Settings:
         self.save()
 
     def get_mcp_servers(self):
-        return self.get("mcp_servers", [])
+        # Ensure backward compatibility for users with old config
+        servers = self.get("mcp_servers", [])
+        if servers and isinstance(servers[0], str):
+            # Convert old string-based list to new object-based list
+            new_servers = [{"name": f"Server {i+1}", "url": url, "enabled": True, "command": "", "args": ""} for i, url in enumerate(servers)]
+            self.set("mcp_servers", new_servers)
+            return new_servers
+        return servers
 
-    def add_mcp_server(self, url):
+    def add_mcp_server(self, server_definition):
         servers = self.get_mcp_servers()
-        if url not in servers:
-            servers.append(url)
+        servers.append(server_definition)
+        self.set("mcp_servers", servers)
+
+    def update_mcp_server(self, index, server_definition):
+        servers = self.get_mcp_servers()
+        if 0 <= index < len(servers):
+            servers[index] = server_definition
             self.set("mcp_servers", servers)
 
-    def remove_mcp_server(self, url):
+    def remove_mcp_server(self, index):
         servers = self.get_mcp_servers()
-        if url in servers:
-            servers.remove(url)
+        if 0 <= index < len(servers):
+            servers.pop(index)
             self.set("mcp_servers", servers)
 
     def get_api_mode(self):
