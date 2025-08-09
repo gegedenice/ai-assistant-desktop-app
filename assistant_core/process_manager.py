@@ -11,10 +11,20 @@ class ProcessManager:
         for server in servers:
             if server.get('enabled') and server.get('command'):
                 try:
-                    command = [server['command']] + shlex.split(server.get('args', ''))
+                    # Handle args whether they are a string or a list
+                    args_raw = server.get('args')
+                    if isinstance(args_raw, str):
+                        args_list = shlex.split(args_raw)
+                    elif isinstance(args_raw, list):
+                        args_list = args_raw
+                    else:
+                        args_list = []
+
+                    command = [server['command']] + args_list
                     print(f"Starting server '{server['name']}': {' '.join(command)}")
                     # Use Popen for non-blocking process creation
-                    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                    # Redirect stdout/stderr to DEVNULL to prevent pipe deadlocks
+                    proc = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                     self.processes.append(proc)
                 except Exception as e:
                     print(f"Failed to start server '{server['name']}': {e}")
