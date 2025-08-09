@@ -1,5 +1,13 @@
 {
-    "mcp_servers": [],
+    "mcp_servers": [
+        {
+            "name": "Fetch",
+            "url": "",
+            "command": "uvx",
+            "args": "mcp-server-fetch",
+            "enabled": true
+        }
+    ],
     "openai_api_mode": "assistant",
     "api_keys": {
         "openai": "sk-..."
