@@ -22,6 +22,7 @@ This Python desktop application serves as a powerful personal assistant interfac
 
 ## Architecture Overview
 
+```
 +---------------------+
 |   Desktop GUI Layer  |
 | (User interactions)  |
@@ -37,7 +38,7 @@ This Python desktop application serves as a powerful personal assistant interfac
            v
 +-----------------------------+
 |       Tool Modules           |
-|                             |
+|                              |
 | - File Search Tool           | <--> Local filesystem
 | - Web Browser Tool           | <--> Web access via scraping or browser automation
 | - Code Tool                  | <--> Local code execution environment
@@ -51,7 +52,7 @@ This Python desktop application serves as a powerful personal assistant interfac
 | - External providers (e.g., Ollama)  |
 | - MCP Server (optional for generic)  |
 +-------------------------------------+
-
+```
 
 ---
 
@@ -141,6 +142,7 @@ This Python desktop application serves as a powerful personal assistant interfac
 
 ## Initial Python Project Structure
 
+```
 personal_assistant/
 │
 ├── assistant_core/
@@ -174,6 +176,7 @@ personal_assistant/
 ├── requirements.txt
 ├── README.md
 ├── main.py                  # App entry point
+```
 
 ---
 
