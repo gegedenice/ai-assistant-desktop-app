@@ -57,7 +57,7 @@ The application is architected around a client-server model for tools. The main 
 
 ### 1. Desktop GUI Layer
 - A simple and clean interface for interacting with the assistant.
-- **MCP Server Management**: A built-in dialog to add or remove the URLs of external MCP servers.
+- **MCP Server Management**: A built-in dialog to define and manage external MCP servers, including controlling their lifecycle.
 - **API Mode Switching**: A dropdown menu to instantly switch between OpenAI's `chat` and `assistant` API modes.
 
 ### 2. Assistant Core API
@@ -74,6 +74,37 @@ The application is architected around a client-server model for tools. The main 
 ### 4. MCP Servers (External)
 - These are separate, independent web servers that expose tools over a consistent API (`/tools` and `/invoke`).
 - This decoupling allows for tools to be developed, deployed, and scaled independently of the main assistant application.
+
+---
+
+## MCP Server Management
+
+A key feature of this application is its ability to manage the lifecycle of MCP server processes directly. Instead of requiring you to manually start and stop tool servers in a separate terminal, you can configure them within the application, and it will handle running them in the background.
+
+### How It Works
+1.  **Define a Server**: In the `File -> Manage MCP Servers` dialog, you can define a new server by providing:
+    - **Name**: A user-friendly name for the server (e.g., "Filesystem Tools").
+    - **URL**: The URL where the server will be accessible (e.g., `http://localhost:8000`). The assistant uses this to connect to the server.
+    - **Command**: The command used to start the server (e.g., `npx`, `python`, `uvx`).
+    - **Arguments**: The arguments to pass to the command.
+    - **Enabled**: A checkbox to determine if the application should start this server on launch.
+2.  **Automatic Process Management**: When the application starts, the built-in `ProcessManager` finds all enabled servers in your configuration and runs their commands as background processes.
+3.  **Clean Shutdown**: When you close the application, the `ProcessManager` automatically terminates all the server processes it started.
+
+### Example: Running a Filesystem Server
+
+If you want to give the assistant access to your local files, you can use a compatible MCP server like `@modelcontextprotocol/server-filesystem`. You can configure the application to run this server for you:
+
+1.  Navigate to `File -> Manage MCP Servers` and click **Add**.
+2.  Fill in the details in the server editor window:
+    - **Name**: `My Filesystem`
+    - **URL**: `http://localhost:8000` (or the default port for that server)
+    - **Command**: `npx`
+    - **Arguments**: `-y @modelcontextprotocol/server-filesystem /path/to/your/documents`
+    - **Enabled**: Make sure the checkbox is ticked.
+3.  Save the configuration.
+
+The next time you start the application, it will automatically run this command in the background, and the assistant will be able to connect to it at the specified URL to use its filesystem tools.
 
 ---
 
