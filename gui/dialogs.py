@@ -136,3 +136,18 @@ class MCPManagerDialog(tk.Toplevel):
             index = int(selected_item)
             settings.remove_mcp_server(index)
             self.populate_tree()
+
+
+class RemoteTransformersUrlDialog(simpledialog.Dialog):
+    def body(self, master):
+        self.title("Configure Remote Transformers URL")
+        tk.Label(master, text="Remote Base URL (must end with /v1):").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.url_var = tk.StringVar(master, value=settings.get_remote_transformers_url())
+        self.url_entry = tk.Entry(master, textvariable=self.url_var, width=60)
+        self.url_entry.grid(row=0, column=1, padx=5, pady=5)
+        return self.url_entry
+
+    def apply(self):
+        url = self.url_var.get().strip()
+        settings.set_remote_transformers_url(url)
+        messagebox.showinfo("Saved", "Remote Transformers URL saved.", parent=self)

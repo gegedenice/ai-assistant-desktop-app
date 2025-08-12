@@ -1,6 +1,6 @@
 import requests
 import json
-from .providers import OpenAIProvider, GroqProvider, LocalTransformersProvider
+from .providers import OpenAIProvider, GroqProvider, LocalTransformersProvider, RemoteTransformersProvider
 from config.settings import settings
 
 class Assistant:
@@ -12,6 +12,8 @@ class Assistant:
             self.provider = GroqProvider(model=model_name)
         elif provider_name == "local_transformers":
             self.provider = LocalTransformersProvider(model=model_name)
+        elif provider_name == "remote_transformers":
+            self.provider = RemoteTransformersProvider(model=model_name)
         else:  # Default to openai
             self.provider = OpenAIProvider(model=model_name)
 
@@ -52,6 +54,10 @@ class Assistant:
     def handle_command(self, user_input: str) -> str:
         # The new provider logic will handle the different flows
         return self.provider.handle_chat(user_input, self.tool_schemas, self._invoke_tool)
+
+    def handle_command_stream(self, user_input: str, stream_callback: callable) -> str:
+        """Streaming version of handle_command."""
+        return self.provider.handle_chat_stream(user_input, self.tool_schemas, self._invoke_tool, stream_callback)
 
     def _invoke_tool(self, tool_name, kwargs):
         server_url = self._get_server_url_for_tool(tool_name)

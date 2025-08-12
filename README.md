@@ -45,9 +45,9 @@ The application is architected around a client-server model for tools. The main 
                               v
 +-----------------------------+------------------------------+
 |                 LLM Backend / Provider Layer                 |
-| - OpenAI Provider (configurable mode)                      |
-|   - "Chat" Mode (Chat Completions API)                     |
-|   - "Assistant" Mode (Assistants API)                      |
+| - OpenAI Provider (configurable model)                      |
+| - Groq Provider (configurable model)                     |
+| - Local and remote Transformers Provider (configurable model)                      |
 +------------------------------------------------------------+
 ```
 
@@ -129,6 +129,7 @@ personal_assistant/
 │
 ├── requirements.txt
 ├── README.md
+├── config.template.json     # To copy to config.json
 └── main.py                  # App entry point
 ```
 
@@ -137,6 +138,8 @@ personal_assistant/
 ## Installation & Setup
 
 This project uses `uv` for fast environment and package management.
+
+**Note**: The `config.json` file is gitignored to protect your API keys and personal configuration. Always start with the template file.
 
 1.  **Clone the repository**
     ```bash
@@ -156,9 +159,10 @@ This project uses `uv` for fast environment and package management.
     ```
 
 4.  **Configure the Assistant**
-    - Run the application. It will create a `config.json` file in the root directory to store your settings.
-    - **API Key**: Use the `File -> Manage API Keys` menu to add your OpenAI API key.
+    - Copy the configuration template: `cp config.template.json config.json`
+    - **API Keys**: Use the `File -> Manage API Keys` menu to add your OpenAI and Groq API keys.
     - **MCP Servers**: Use the `File -> Manage MCP Servers` menu to add the URLs of the tool servers you want to connect to.
+    - **Remote Transformers**: If using a remote transformers server, use `Provider -> Set Remote Transformers URL...` to configure the endpoint.
 
 5.  **Run the application**
     ```bash

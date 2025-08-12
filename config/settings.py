@@ -12,6 +12,7 @@ class Settings:
             return {
                 "selected_provider": "openai",
                 "selected_model": "gpt-4",
+                "remote_transformers_url": "",
                 "mcp_servers": [],
                 "api_keys": {}
             }
@@ -21,6 +22,9 @@ class Settings:
             # Ensure api_keys key exists for backward compatibility
             if "api_keys" not in settings:
                 settings["api_keys"] = {}
+            # Ensure remote_transformers_url exists for backward compatibility
+            if "remote_transformers_url" not in settings:
+                settings["remote_transformers_url"] = ""
             return settings
 
     def save(self):
@@ -80,6 +84,13 @@ class Settings:
 
     def set_selected_model(self, model):
         self.set("selected_model", model)
+
+    # Remote Transformers URL management
+    def get_remote_transformers_url(self):
+        return self.get("remote_transformers_url", "")
+
+    def set_remote_transformers_url(self, url):
+        self.set("remote_transformers_url", url)
 
 # Global settings instance
 settings = Settings()

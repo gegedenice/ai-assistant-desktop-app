@@ -1,12 +1,9 @@
 import tkinter as tk
-from tkinter import ttk
-import importlib.util
-import subprocess
-import threading
 import ttkbootstrap as ttk
+import threading
 from assistant_core.assistant import Assistant
-from assistant_core.providers import OpenAIProvider, GroqProvider, LocalTransformersProvider
-from .dialogs import MCPManagerDialog, ApiKeysDialog
+from assistant_core.providers import OpenAIProvider, GroqProvider, LocalTransformersProvider, RemoteTransformersProvider
+from .dialogs import MCPManagerDialog, ApiKeysDialog, RemoteTransformersUrlDialog
 from config.settings import settings
 from assistant_core.process_manager import process_manager
 
@@ -47,6 +44,9 @@ class MainWindow(ttk.Window):
         provider_menu.add_radiobutton(label="OpenAI", variable=self.provider_var, value="openai", command=self._on_provider_changed)
         provider_menu.add_radiobutton(label="Groq", variable=self.provider_var, value="groq", command=self._on_provider_changed)
         provider_menu.add_radiobutton(label="Local Transformers", variable=self.provider_var, value="local_transformers", command=self._on_provider_changed)
+        provider_menu.add_radiobutton(label="Remote Transformers", variable=self.provider_var, value="remote_transformers", command=self._on_provider_changed)
+        provider_menu.add_separator()
+        provider_menu.add_command(label="Set Remote Transformers URL...", command=self.open_remote_transformers_url_dialog)
         self.menu_bar.add_cascade(label="Provider", menu=provider_menu)
 
         self.config(menu=self.menu_bar)
@@ -60,6 +60,8 @@ class MainWindow(ttk.Window):
             models = GroqProvider.get_models()
         elif provider_name == "local_transformers":
             models = LocalTransformersProvider.get_models()
+        elif provider_name == "remote_transformers":
+            models = RemoteTransformersProvider.get_models()
         else:
             models = []
 
@@ -76,12 +78,10 @@ class MainWindow(ttk.Window):
         provider = self.provider_var.get()
         settings.set_selected_provider(provider)
         self._update_models_list()
-        print(f"Switched to {provider} provider.")
 
     def _on_model_changed(self, event=None):
         model = self.model_var.get()
         settings.set_selected_model(model)
-        print(f"Switched to model {model}")
 
     def _create_widgets(self):
         # Main frame
@@ -110,6 +110,12 @@ class MainWindow(ttk.Window):
 
         self.input_text = tk.Text(input_frame, height=4, wrap="word")
         self.input_text.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        
+        # Add placeholder text
+        self.input_text.insert("1.0", "Type your message here...")
+        self.input_text.config(foreground="gray")
+        self.input_text.bind("<FocusIn>", self._on_input_focus_in)
+        self.input_text.bind("<FocusOut>", self._on_input_focus_out)
 
         self.send_button = ttk.Button(input_frame, text="Send", command=self.on_send, style="primary.TButton")
         self.send_button.pack(side="right")
@@ -121,7 +127,7 @@ class MainWindow(ttk.Window):
 
     def on_send(self):
         user_input = self.input_text.get("1.0", tk.END).strip()
-        if not user_input:
+        if not user_input or user_input == "Type your message here...":
             return
 
         # Re-initialize assistant to pick up any settings changes
@@ -130,13 +136,27 @@ class MainWindow(ttk.Window):
 
         self.output_text.insert(tk.END, f"> You: {user_input}\n", "user")
         self.output_text.update_idletasks()
-
-        response = self.assistant.handle_command(user_input)
-
-        if response.startswith("Error:"):
-            self.output_text.insert(tk.END, f"> Assistant: {response}\n\n", "error")
-        else:
-            self.output_text.insert(tk.END, f"> Assistant: {response}\n\n", "assistant")
+        
+        # Start streaming response
+        self.output_text.insert(tk.END, "> Assistant: ", "assistant")
+        self.output_text.update_idletasks()
+        
+        def stream_callback(token):
+            # Use after() to schedule UI updates on the main thread
+            self.after(0, lambda: self._update_streaming_output(token))
+        
+        # Run streaming in a separate thread to prevent UI blocking
+        def streaming_thread():
+            try:
+                response = self.assistant.handle_command_stream(user_input, stream_callback)
+                # Add newline after streaming is complete
+                self.after(0, lambda: self._finish_streaming())
+            except Exception as e:
+                error_msg = f"Error: {e}"
+                self.after(0, lambda: self._update_streaming_output(error_msg))
+                self.after(0, lambda: self._finish_streaming())
+        
+        threading.Thread(target=streaming_thread, daemon=True).start()
 
         self.input_text.delete("1.0", tk.END)
 
@@ -145,4 +165,28 @@ class MainWindow(ttk.Window):
 
     def open_mcp_manager(self):
         MCPManagerDialog(self)
+
+    def open_remote_transformers_url_dialog(self):
+        RemoteTransformersUrlDialog(self)
+        if self.provider_var.get() == "remote_transformers":
+            self._update_models_list()
+
+    def _on_input_focus_in(self, event):
+        if self.input_text.get("1.0", tk.END).strip() == "Type your message here...":
+            self.input_text.delete("1.0", tk.END)
+            self.input_text.config(foreground="black")
+
+    def _on_input_focus_out(self, event):
+        if not self.input_text.get("1.0", tk.END).strip():
+            self.input_text.insert("1.0", "Type your message here...")
+            self.input_text.config(foreground="gray")
+
+    def _update_streaming_output(self, token):
+        """Update the streaming output on the main thread."""
+        self.output_text.insert(tk.END, token)
+        self.output_text.see(tk.END)
+
+    def _finish_streaming(self):
+        """Finish the streaming response on the main thread."""
+        self.output_text.insert(tk.END, "\n\n")
 
