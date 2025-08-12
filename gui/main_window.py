@@ -3,28 +3,31 @@ from tkinter import ttk
 import importlib.util
 import subprocess
 import threading
+import ttkbootstrap as ttk
 from assistant_core.assistant import Assistant
 from assistant_core.providers import OpenAIProvider, GroqProvider, LocalTransformersProvider
 from .dialogs import MCPManagerDialog, ApiKeysDialog
 from config.settings import settings
 from assistant_core.process_manager import process_manager
 
-class MainWindow(tk.Tk):
+class MainWindow(ttk.Window):
     def __init__(self):
-        super().__init__()
+        super().__init__(themename="cosmo")
         self.title("Personal Assistant")
         self.geometry("600x450")
 
+        # Initialize variables first
+        self.provider_var = tk.StringVar(self)
+        self.provider_var.set(settings.get_selected_provider())
+        self.model_var = tk.StringVar(self)
+        self.model_var.set(settings.get_selected_model())
+
+        # Then create menu and widgets
         self._create_menu()
         self._create_widgets()
 
         # Assistant will be initialized on the first `on_send` call
         self.assistant = None
-
-        self.provider_var = tk.StringVar(self)
-        self.provider_var.set(settings.get_selected_provider())
-        self.model_var = tk.StringVar(self)
-        self.model_var.set(settings.get_selected_model())
 
         self._update_models_list()
 
@@ -75,50 +78,46 @@ class MainWindow(tk.Tk):
         self._update_models_list()
         print(f"Switched to {provider} provider.")
 
-        if provider == "local_transformers":
-            threading.Thread(target=self._setup_local_transformers, daemon=True).start()
-
-    def _setup_local_transformers(self):
-        if importlib.util.find_spec("transformers") is None:
-            print("transformers library not found. Installing...")
-            self.output_text.insert(tk.END, "> Assistant: Installing transformers library. This may take a moment...\n")
-            self.output_text.update_idletasks()
-
-            try:
-                subprocess.check_call(["uv", "pip", "install", "git+https://github.com/huggingface/transformers.git"])
-                self.output_text.insert(tk.END, "> Assistant: transformers library installed successfully.\n")
-            except subprocess.CalledProcessError as e:
-                self.output_text.insert(tk.END, f"> Assistant: Error installing transformers: {e}\n")
-                return
-
-        print("Starting local transformers server...")
-        self.output_text.insert(tk.END, "> Assistant: Starting local transformers server...\n")
-        process_manager.start_process("uv", ["run", "python", "-m", "transformers.commands.serve", "local", "--port", "8008"], name="Transformers Server")
-
     def _on_model_changed(self, event=None):
         model = self.model_var.get()
         settings.set_selected_model(model)
         print(f"Switched to model {model}")
 
     def _create_widgets(self):
-        # Top frame for provider and model selection
-        top_frame = tk.Frame(self)
-        top_frame.pack(fill="x", padx=10, pady=5)
+        # Main frame
+        main_frame = ttk.Frame(self, padding="10")
+        main_frame.pack(fill="both", expand=True)
 
-        tk.Label(top_frame, text="Model:").pack(side="left")
-        self.model_menu = ttk.Combobox(top_frame, textvariable=self.model_var)
+        # Top frame for provider and model selection
+        top_frame = ttk.Frame(main_frame)
+        top_frame.pack(fill="x", pady=(0, 10))
+
+        ttk.Label(top_frame, text="Model:").pack(side="left")
+        self.model_menu = ttk.Combobox(top_frame, textvariable=self.model_var, width=30)
         self.model_menu.pack(side="left", padx=5)
         self.model_menu.bind("<<ComboboxSelected>>", self._on_model_changed)
 
-        # Main chat widgets
-        self.input_text = tk.Text(self, height=4)
-        self.input_text.pack(fill="x", padx=10)
+        # Chat frame
+        chat_frame = ttk.Frame(main_frame)
+        chat_frame.pack(fill="both", expand=True)
 
-        self.output_text = tk.Text(self, height=15)
-        self.output_text.pack(fill="both", expand=True, padx=10, pady=5)
+        self.output_text = tk.Text(chat_frame, height=15, wrap="word")
+        self.output_text.pack(fill="both", expand=True)
 
-        self.send_button = tk.Button(self, text="Send", command=self.on_send)
-        self.send_button.pack(pady=5)
+        # Input frame
+        input_frame = ttk.Frame(main_frame)
+        input_frame.pack(fill="x", pady=(10, 0))
+
+        self.input_text = tk.Text(input_frame, height=4, wrap="word")
+        self.input_text.pack(side="left", fill="x", expand=True, padx=(0, 10))
+
+        self.send_button = ttk.Button(input_frame, text="Send", command=self.on_send, style="primary.TButton")
+        self.send_button.pack(side="right")
+
+        # Configure text tags for chat display
+        self.output_text.tag_configure("user", foreground="black")
+        self.output_text.tag_configure("assistant", foreground="blue")
+        self.output_text.tag_configure("error", foreground="red")
 
     def on_send(self):
         user_input = self.input_text.get("1.0", tk.END).strip()
@@ -129,12 +128,16 @@ class MainWindow(tk.Tk):
         # A more sophisticated approach might be to have the assistant update itself
         self.assistant = Assistant()
 
-        self.output_text.insert(tk.END, f"> You: {user_input}\n")
+        self.output_text.insert(tk.END, f"> You: {user_input}\n", "user")
         self.output_text.update_idletasks()
 
         response = self.assistant.handle_command(user_input)
 
-        self.output_text.insert(tk.END, f"> Assistant: {response}\n\n")
+        if response.startswith("Error:"):
+            self.output_text.insert(tk.END, f"> Assistant: {response}\n\n", "error")
+        else:
+            self.output_text.insert(tk.END, f"> Assistant: {response}\n\n", "assistant")
+
         self.input_text.delete("1.0", tk.END)
 
     def open_api_keys_manager(self):

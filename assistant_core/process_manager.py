@@ -33,6 +33,10 @@ class ProcessManager:
 
                 self.start_process(server['command'], args_list, name=server.get('name', 'MCP Server'))
 
+    def start_transformers_server(self, port=8008):
+        # Canonical command: transformers serve --port <port>
+        return self.start_process("transformers", ["serve", "--port", str(port)], name="Transformers Server")
+
     def shutdown(self):
         print("Shutting down all managed processes...")
         for proc in self.processes:
