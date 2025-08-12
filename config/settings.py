@@ -10,6 +10,8 @@ class Settings:
         if not os.path.exists(self.config_file):
             # Default settings
             return {
+                "selected_provider": "openai",
+                "selected_model": "gpt-4",
                 "mcp_servers": [],
                 "api_keys": {}
             }
@@ -66,6 +68,18 @@ class Settings:
         keys = self.get("api_keys", {})
         keys[provider] = key
         self.set("api_keys", keys)
+
+    def get_selected_provider(self):
+        return self.get("selected_provider", "openai")
+
+    def set_selected_provider(self, provider):
+        self.set("selected_provider", provider)
+
+    def get_selected_model(self):
+        return self.get("selected_model")
+
+    def set_selected_model(self, model):
+        self.set("selected_model", model)
 
 # Global settings instance
 settings = Settings()

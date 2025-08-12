@@ -10,5 +10,7 @@
     ],
     "api_keys": {
         "openai": "sk-..."
-    }
+    },
+    "selected_provider": "openai",
+    "selected_model": "gpt-4"
 }
