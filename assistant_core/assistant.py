@@ -1,11 +1,20 @@
 import requests
 import json
-from .providers import OpenAIProvider
+from .providers import OpenAIProvider, GroqProvider, LocalTransformersProvider
 from config.settings import settings
 
 class Assistant:
-    def __init__(self, provider=None):
-        self.provider = provider or OpenAIProvider()
+    def __init__(self):
+        provider_name = settings.get_selected_provider()
+        model_name = settings.get_selected_model()
+
+        if provider_name == "groq":
+            self.provider = GroqProvider(model=model_name)
+        elif provider_name == "local_transformers":
+            self.provider = LocalTransformersProvider(model=model_name)
+        else:  # Default to openai
+            self.provider = OpenAIProvider(model=model_name)
+
         self.mcp_server_urls = settings.get_mcp_servers()
         self.tools_info = self._fetch_all_tools()
         self.tool_schemas = [info['schema'] for info in self.tools_info]

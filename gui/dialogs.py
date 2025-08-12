@@ -5,18 +5,34 @@ from config.settings import settings
 class ApiKeysDialog(simpledialog.Dialog):
     def body(self, master):
         self.title("Manage API Keys")
-        tk.Label(master, text="OpenAI API Key:").grid(row=0, sticky="w")
-        self.openai_key_var = tk.StringVar(master)
-        self.openai_key_var.set(settings.get_api_key("openai") or "")
-        self.openai_key_entry = tk.Entry(master, textvariable=self.openai_key_var, width=50)
-        self.openai_key_entry.grid(row=0, column=1, padx=5, pady=5)
-        return self.openai_key_entry
+        self.providers = ["openai", "groq"]  # Providers that require API keys
+
+        tk.Label(master, text="Provider:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.provider_var = tk.StringVar(master)
+        self.provider_var.set(self.providers[0])
+        self.provider_menu = ttk.Combobox(master, textvariable=self.provider_var, values=self.providers)
+        self.provider_menu.grid(row=0, column=1, padx=5, pady=5)
+        self.provider_menu.bind("<<ComboboxSelected>>", self.on_provider_select)
+
+        tk.Label(master, text="API Key:").grid(row=1, column=0, sticky="w", padx=5, pady=5)
+        self.api_key_var = tk.StringVar(master)
+        self.api_key_entry = tk.Entry(master, textvariable=self.api_key_var, width=50)
+        self.api_key_entry.grid(row=1, column=1, padx=5, pady=5)
+
+        self.on_provider_select()  # Initial population of the key
+        return self.api_key_entry
+
+    def on_provider_select(self, event=None):
+        provider = self.provider_var.get()
+        api_key = settings.get_api_key(provider) or ""
+        self.api_key_var.set(api_key)
 
     def apply(self):
-        new_key = self.openai_key_var.get().strip()
+        provider = self.provider_var.get()
+        new_key = self.api_key_var.get().strip()
         if new_key:
-            settings.set_api_key("openai", new_key)
-            messagebox.showinfo("Success", "OpenAI API Key saved.", parent=self)
+            settings.set_api_key(provider, new_key)
+            messagebox.showinfo("Success", f"{provider.capitalize()} API Key saved.", parent=self)
 
 class ServerEditorDialog(simpledialog.Dialog):
     def __init__(self, parent, title, server=None):
