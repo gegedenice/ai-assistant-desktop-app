@@ -9,8 +9,9 @@
         }
     ],
     "api_keys": {
-        "openai": "sk-..."
+        "openai": "sk-...",
+        "groq": "gsk_..."
     },
-    "selected_provider": "openai",
-    "selected_model": "gpt-4"
+    "selected_provider": "groq",
+    "selected_model": "openai/gpt-oss-20b"
 }

@@ -1,6 +1,8 @@
 openai
-groq
 tk
 Flask
 requests
 beautifulsoup4
+transformers[serving]
+pillow
+torch

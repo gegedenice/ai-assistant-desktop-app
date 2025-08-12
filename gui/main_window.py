@@ -15,16 +15,18 @@ class MainWindow(tk.Tk):
         self.title("Personal Assistant")
         self.geometry("600x450")
 
+        # Initialize variables first
+        self.provider_var = tk.StringVar(self)
+        self.provider_var.set(settings.get_selected_provider())
+        self.model_var = tk.StringVar(self)
+        self.model_var.set(settings.get_selected_model())
+
+        # Then create menu and widgets
         self._create_menu()
         self._create_widgets()
 
         # Assistant will be initialized on the first `on_send` call
         self.assistant = None
-
-        self.provider_var = tk.StringVar(self)
-        self.provider_var.set(settings.get_selected_provider())
-        self.model_var = tk.StringVar(self)
-        self.model_var.set(settings.get_selected_model())
 
         self._update_models_list()
 
@@ -74,26 +76,6 @@ class MainWindow(tk.Tk):
         settings.set_selected_provider(provider)
         self._update_models_list()
         print(f"Switched to {provider} provider.")
-
-        if provider == "local_transformers":
-            threading.Thread(target=self._setup_local_transformers, daemon=True).start()
-
-    def _setup_local_transformers(self):
-        if importlib.util.find_spec("transformers") is None:
-            print("transformers library not found. Installing...")
-            self.output_text.insert(tk.END, "> Assistant: Installing transformers library. This may take a moment...\n")
-            self.output_text.update_idletasks()
-
-            try:
-                subprocess.check_call(["uv", "pip", "install", "git+https://github.com/huggingface/transformers.git"])
-                self.output_text.insert(tk.END, "> Assistant: transformers library installed successfully.\n")
-            except subprocess.CalledProcessError as e:
-                self.output_text.insert(tk.END, f"> Assistant: Error installing transformers: {e}\n")
-                return
-
-        print("Starting local transformers server...")
-        self.output_text.insert(tk.END, "> Assistant: Starting local transformers server...\n")
-        process_manager.start_process("uv", ["run", "python", "-m", "transformers.commands.serve", "local", "--port", "8008"], name="Transformers Server")
 
     def _on_model_changed(self, event=None):
         model = self.model_var.get()

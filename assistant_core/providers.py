@@ -2,7 +2,6 @@ import openai
 import os
 import json
 import time
-import groq
 
 class BaseProvider:
     def handle_chat(self, user_input: str, tools: list, tool_invoker: callable) -> str:
@@ -30,7 +29,7 @@ class OpenAIProvider(BaseProvider):
 
         # Initialize client now that we know we have a key and need to use it
         if self.client is None:
-            self.client = openai.OpenAI(api_key=self.api_key)
+            self.client = openai.OpenAI(base_url="https://api.openai.com/v1",api_key=self.api_key)
 
         return self._handle_chat_completions(user_input, tool_schemas, tool_invoker)
 
@@ -75,7 +74,7 @@ class OpenAIProvider(BaseProvider):
         if not api_key:
             return []
         try:
-            client = openai.OpenAI(api_key=api_key)
+            client = openai.OpenAI(base_url="https://api.openai.com/v1", api_key=api_key)
             models = client.models.list()
             return [model.id for model in models.data]
         except Exception as e:
@@ -99,7 +98,7 @@ class GroqProvider(BaseProvider):
 
         # Initialize client now that we know we have a key and need to use it
         if self.client is None:
-            self.client = groq.Groq(api_key=self.api_key)
+            self.client = openai.OpenAI(base_url="https://api.groq.com/openai/v1",api_key=self.api_key)
 
         return self._handle_chat_completions(user_input, tool_schemas, tool_invoker)
 
@@ -144,7 +143,7 @@ class GroqProvider(BaseProvider):
         if not api_key:
             return []
         try:
-            client = groq.Groq(api_key=api_key)
+            client = openai.OpenAI(base_url="https://api.groq.com/openai/v1", api_key=api_key)
             models = client.models.list()
             return [model.id for model in models.data]
         except Exception as e:
@@ -199,7 +198,7 @@ class LocalTransformersProvider(BaseProvider):
     @classmethod
     def get_models(cls):
         try:
-            client = openai.OpenAI(base_url="http://localhost:8008/v1")
+            client = openai.OpenAI(base_url="http://localhost:8008/v1", api_key="local")
             models = client.models.list()
             return [model.id for model in models.data]
         except Exception as e:
